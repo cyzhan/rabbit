@@ -5,15 +5,13 @@ from pydantic import ValidationError
 from ujson import loads
 
 
-def body_validator(clz):
+def body_validator(clz: type):
     def decorator(f):
         @wraps(f)
         async def decorated_function(request: Request, *args, **kwargs):
             try:
                 obj = clz(**request.json)
-                print('hello before f')
-                response = await f(request, *args, **kwargs)
-                print('hello after f, before return')
+                response = await f(request, *args, **kwargs, body=obj)
                 return response
             except ValidationError as e:
                 print(e.json())

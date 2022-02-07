@@ -18,8 +18,7 @@ async def register(request: Request, body: User) -> response:
 
 @users_bp.route("/login", methods=['POST'])
 @body_validator(clz=User)
-async def login(request: Request) -> response:
-    body = request.json
+async def login(request: Request, body: User) -> response:
     print(body)
     return json({'code': 20000, 'msg': 'ok'})
 
@@ -30,7 +29,13 @@ async def get_users_list(request: Request) -> response:
     return json({'code': 20000, 'msg': 'ok'})
 
 
-@users_bp.route("/<user_id>", methods=['PUT'])
-async def update_users_info(request: Request) -> response:
+@users_bp.route("/<user_id:int>", methods=['GET'])
+async def get_user_by_id(request: Request, user_id: int) -> response:
+    print("user_id = {}".format(user_id))
+    return json({'code': 20000, 'msg': 'ok'})
+
+
+@users_bp.route("/<user_id:int>", methods=['PUT'])
+async def update_users_info(request: Request, user_id: int) -> response:
     login_obj = request.json
     return json({'code': 20000, 'msg': 'ok'})

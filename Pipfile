@@ -8,6 +8,7 @@ uvloop = "*"
 sanic = "*"
 pydantic = "*"
 sanic-ext = "*"
+mysqlclient = "*"
 
 [dev-packages]
 
