@@ -9,6 +9,7 @@ sanic = "*"
 pydantic = "*"
 sanic-ext = "*"
 mysqlclient = "*"
+dbutils = "*"
 
 [dev-packages]
 
