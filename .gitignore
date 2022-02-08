@@ -3,3 +3,4 @@
 model/__pycache__/**
 route/__pycache__/**
 util/__pycache__/**
+sql/__pycache__/**
