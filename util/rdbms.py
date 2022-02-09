@@ -13,8 +13,7 @@ class MyDBUtil:
             conv[246] = float  # convert decimals to floats
             conv[10] = str  # convert dates to strings
             conv[7] = str # convert datetime to strings
-            # 5为连接池里的最少连接数
-            self.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=5, host='inno.odds-machine.com', user='root',
+            self.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=5, host='172.28.41.148', user='root',
                                    password='qwer', db='rbmq', port=3306, cursorclass=DictCursor, conv=conv)
             print('MyDBUtil object created')
         except Exception as e:
@@ -25,7 +24,7 @@ class MyDBUtil:
         cursor = cnx.cursor()
         try:
             count = cursor.execute(sql, params)
-            print('count = ' + str(count))
+            print('query_one find = {}'.format(count))
             return cursor.fetchall()
         finally:
             cursor.close()
