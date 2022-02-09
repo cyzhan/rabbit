@@ -10,7 +10,7 @@ from sql.user_script import UserSql
 from util.common import response_ok, response_ok_of
 
 users_bp = Blueprint("users_bp", url_prefix="/users")
-SALT = "f93tnlay1FSk3LF03nf&Zmhr"
+SALT = "fepwhgZeiTVpeugDkYc63T"
 
 
 @users_bp.route("", methods=['POST'])
@@ -18,7 +18,7 @@ SALT = "f93tnlay1FSk3LF03nf&Zmhr"
 @body_validator(clz=User)
 async def register(request: Request, body: User) -> response:
     data = body.dict()
-    encrypt_pwd = encrypt.md5(SALT + ':' + data['password'])
+    encrypt_pwd = encrypt.md5(data['password'] + ':' + SALT)
     updated_rows = await db.insert(UserSql.REGISTER, [data['name'], encrypt_pwd, data['email']])
     print("updated row = {}".format(updated_rows))
     return response_ok
