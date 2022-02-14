@@ -1,16 +1,17 @@
 from sanic import Blueprint
 from sanic import Request, response
 from sanic.response import json
-from sanic_ext import validate
+from model.page_model import Page
 from model.user_model import User
 from util import encrypt
 from util.my_decorators import body_validator
-from util.rdbms import db
 from sql.user_script import UserSql
 from util.common import response_ok, response_ok_of
+import os
+from util.rdbms import db
 
 users_bp = Blueprint("users_bp", url_prefix="/users")
-SALT = "fepwhgZeiTVpeugDkYc63T"
+SALT1 = os.getenv("SALT1")
 
 
 @users_bp.route("", methods=['POST'])
@@ -18,7 +19,7 @@ SALT = "fepwhgZeiTVpeugDkYc63T"
 @body_validator(clz=User)
 async def register(request: Request, body: User) -> response:
     data = body.dict()
-    encrypt_pwd = encrypt.md5(data['password'] + ':' + SALT)
+    encrypt_pwd = encrypt.md5("{}:{}".format(data['password'], SALT1))
     updated_rows = await db.insert(UserSql.REGISTER, [data['name'], encrypt_pwd, data['email']])
     print("updated row = {}".format(updated_rows))
     return response_ok
@@ -27,32 +28,28 @@ async def register(request: Request, body: User) -> response:
 @users_bp.route("/login", methods=['POST'])
 @body_validator(clz=User)
 async def login(request: Request, body: User) -> response:
-    # print(body)
     data_tuple = await db.query_once(UserSql.GET_USER_INFO_BY_NAME, [body.name])
     if len(data_tuple) == 0:
-        print("1")
-        return json({'code': 40002, 'msg': 'account or password error'})
+        return json({'code': 2, 'msg': 'account or password error'})
     pwd_in_db = data_tuple[0].pop('password', None)
-    print('pwd in db = {}'.format(pwd_in_db))
-    print('body.password = {}'.format(encrypt.md5(SALT + ':' + body.password)))
-    if pwd_in_db == encrypt.md5(SALT + ':' + body.password):
+    if pwd_in_db != encrypt.md5(body.password + ':' + SALT1):
+        return json({'code': 2, 'msg': 'account or password error'})
+    else:
         return response_ok_of(data_tuple[0])
-    print("2")
-    return json({'code': 40002, 'msg': 'account or password error'})
 
 
 @users_bp.route("", methods=['GET'])
 async def get_users_list(request: Request) -> response:
-    login_obj = request.json
-    return response_ok
+    page = Page(index=request.args.get("pageIndex"), size=request.args.get("pageSize"))
+    data_tuple = await db.query_once(UserSql.GET_USERS_INFO, [page.offset(), page.size])
+    return response_ok_of(data_tuple)
 
 
 @users_bp.route("/<user_id:int>", methods=['GET'])
 async def get_user_by_id(request: Request, user_id: int) -> response:
-    print("user_id = {}".format(user_id))
     data_tuple = await db.query_once(UserSql.GET_USER_INFO, [user_id])
     if len(data_tuple) == 0:
-        return json({'code': 40001, 'msg': 'no data'})
+        return json({'code': 1, 'msg': 'request data is not found'})
     return response_ok_of(data_tuple[0])
 
 
@@ -60,3 +57,9 @@ async def get_user_by_id(request: Request, user_id: int) -> response:
 async def update_users_info(request: Request, user_id: int) -> response:
     # login_obj = request.json
     return response_ok
+
+
+# @users_bp.route("/password/<user_id:int>", methods=['PATCH'])
+# async def update_users_info(request: Request, user_id: int) -> response:
+#     # login_obj = request.json
+#     return response_ok

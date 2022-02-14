@@ -1,5 +1,4 @@
 class UserSql:
-
     GET_USER_INFO = '''
     select a.id, a.name, a.email, a.balance, a.created_time AS createdTime, a.updated_time AS updatedTime 
     from rbmq.user AS a where id = %s
@@ -12,6 +11,11 @@ class UserSql:
     '''
 
     GET_USER_INFO_BY_NAME = '''
-        select a.id, a.name, a.password, a.email, a.balance, a.created_time AS createdTime, a.updated_time AS updatedTime 
-        from rbmq.user AS a where a.name = %s
-        '''
+    select a.id, a.name, a.password, a.email, a.balance, a.created_time AS createdTime, a.updated_time AS updatedTime 
+    from rbmq.user AS a where a.name = %s
+    '''
+
+    GET_USERS_INFO = '''
+    select a.id, a.name, a.email, a.balance, a.created_time AS createdTime, a.updated_time AS updatedTime 
+    from rbmq.user AS a LIMIT %s,%s
+    '''

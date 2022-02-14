@@ -2,6 +2,7 @@ import MySQLdb
 from MySQLdb import converters
 from dbutils.pooled_db import PooledDB, SharedDBConnection
 from MySQLdb.cursors import DictCursor
+import os
 
 
 class MyDBUtil:
@@ -12,9 +13,10 @@ class MyDBUtil:
             # break below line to check type conv
             conv[246] = float  # convert decimals to floats
             conv[10] = str  # convert dates to strings
-            conv[7] = str # convert datetime to strings
-            self.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=5, host='172.28.41.148', user='root',
-                                   password='qwer', db='rbmq', port=3306, cursorclass=DictCursor, conv=conv)
+            conv[7] = str  # convert datetime to strings
+            self.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=5, host=os.getenv("DB_HOST"),
+                                   user=os.getenv("DB_USER"), password=os.getenv("DB_PASSWORD"), db='rbmq', port=3306,
+                                   cursorclass=DictCursor, conv=conv)
             print('MyDBUtil object created')
         except Exception as e:
             print(e)
