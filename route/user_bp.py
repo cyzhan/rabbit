@@ -9,6 +9,7 @@ from sql.user_script import UserSql
 from util.common import response_ok, response_ok_of
 import os
 from util.rdbms import db
+from util import jwt_util
 
 users_bp = Blueprint("users_bp", url_prefix="/users")
 SALT1 = os.getenv("SALT1")
@@ -32,10 +33,14 @@ async def login(request: Request, body: User) -> response:
     if len(data_tuple) == 0:
         return json({'code': 2, 'msg': 'account or password error'})
     pwd_in_db = data_tuple[0].pop('password', None)
-    if pwd_in_db != encrypt.md5(body.password + ':' + SALT1):
+    if pwd_in_db != encrypt.md5("{}:{}".format(body.password, SALT1)):
         return json({'code': 2, 'msg': 'account or password error'})
     else:
-        return response_ok_of(data_tuple[0])
+        body.id = data_tuple[0]["id"]
+        body_dict = body.dict()
+        body_dict.pop("password", None)
+        return json({'code': 0, 'msg': "ok",
+                     "data": data_tuple[0], 'token': jwt_util.create_and_store_redis(body_dict)})
 
 
 @users_bp.route("", methods=['GET'])
@@ -47,6 +52,9 @@ async def get_users_list(request: Request) -> response:
 
 @users_bp.route("/<user_id:int>", methods=['GET'])
 async def get_user_by_id(request: Request, user_id: int) -> response:
+    jwt = request.headers["Authorization"]
+    token_body = jwt_util.verify(jwt)
+    # print("id:{},name:{}".format(token_body.id, token_body.name))
     data_tuple = await db.query_once(UserSql.GET_USER_INFO, [user_id])
     if len(data_tuple) == 0:
         return json({'code': 1, 'msg': 'request data is not found'})

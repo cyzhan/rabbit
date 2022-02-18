@@ -8,5 +8,7 @@ DB_HOST={host for mysql/maria}
 DB_PASSWORD={}
 REDIS_HOST={host for redis}
 REDIS_PORT={}
+TOKEN_PERIOD={}
+RENEW_MARGIN={}
 ```
 
