@@ -2,9 +2,10 @@ from sanic import Blueprint
 from sanic import Request, response
 from sanic.response import json
 from model.page_model import Page
+from model.password_model import Password
 from model.user_model import User
 from util import encrypt
-from util.my_decorators import body_validator
+from util.my_decorators import body_validator, authorized
 from sql.user_script import UserSql
 from util.common import response_ok, response_ok_of
 import os
@@ -51,10 +52,12 @@ async def get_users_list(request: Request) -> response:
 
 
 @users_bp.route("/<user_id:int>", methods=['GET'])
+@authorized()
 async def get_user_by_id(request: Request, user_id: int) -> response:
-    jwt = request.headers["Authorization"]
-    token_body = jwt_util.verify(jwt)
-    # print("id:{},name:{}".format(token_body.id, token_body.name))
+    # jwt = request.headers["Authorization"]
+    # token_body = jwt_util.verify(jwt)
+    token_body = request.ctx.token_body
+    print("id:{},name:{}".format(token_body.id, token_body.name))
     data_tuple = await db.query_once(UserSql.GET_USER_INFO, [user_id])
     if len(data_tuple) == 0:
         return json({'code': 1, 'msg': 'request data is not found'})
@@ -67,7 +70,10 @@ async def update_users_info(request: Request, user_id: int) -> response:
     return response_ok
 
 
-# @users_bp.route("/password/<user_id:int>", methods=['PATCH'])
-# async def update_users_info(request: Request, user_id: int) -> response:
-#     # login_obj = request.json
-#     return response_ok
+@users_bp.route("/password/<user_id:int>", methods=['PATCH'])
+@body_validator(clz=Password)
+@authorized()
+async def update_user_password(request: Request, body: Password, user_id: int) -> response:
+    # login_obj = request.json
+    print("user_id: {}, password: {}, confirm_password: {}".format(user_id, body.password, body.confirmPassword))
+    return response_ok

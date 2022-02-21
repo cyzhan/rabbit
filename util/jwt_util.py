@@ -44,7 +44,6 @@ def verify(jwt: str) -> TokenBody:
     sign_in_redis: bool = redis.get(RedisKey.login_user(token_body.id)) == signature
     print("renewable = {}, sign_in_redis = {}".format(renewable, sign_in_redis))
     if sign_in_redis and renewable:
-        # provide new token
         body_dict["exp"] = current_ts + TOKEN_PERIOD
         new_token: str = create(body_dict)
         print("new_token = {}".format(new_token))
@@ -62,6 +61,25 @@ def verify(jwt: str) -> TokenBody:
             raise UnAuthorizedException('abcd')
     else:
         raise UnAuthorizedException('efgh')
+
+
+# do signature verify and expire time check
+def verify2(jwt: str) -> TokenBody:
+    ary = jwt.split('.')
+    string = "{}.{}".format(ary[0], ary[1])
+    raw = hmac.new(bytes(SALT2, encoding="utf-8"), bytes(string, encoding="utf-8"), digestmod=hashlib.sha256).digest()
+    signature = str(base64.urlsafe_b64encode(raw), 'utf-8').split("=")[0]
+    if signature != ary[2]:
+        raise UnAuthorizedException('unauthorized signature')
+
+    length: int = len(ary[1])
+    s = ary[1] + '=' * (4 - length % 4)
+    body_dict = ujson.loads(base64.b64decode(s))
+    token_body = TokenBody(**body_dict)
+    current_ts = int(time.time())
+    if current_ts > token_body.exp:
+        raise UnAuthorizedException('token expired')
+    return token_body
 
 
 def create(user_dict: dict) -> str:
