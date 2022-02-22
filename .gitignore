@@ -5,4 +5,5 @@ route/__pycache__/**
 util/__pycache__/**
 sql/__pycache__/**
 exception/__pycache__/**
+service/__pycache__/**
 .env

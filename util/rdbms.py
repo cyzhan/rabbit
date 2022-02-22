@@ -1,6 +1,6 @@
 import MySQLdb
 from MySQLdb import converters
-from dbutils.pooled_db import PooledDB, SharedDBConnection
+from dbutils.pooled_db import PooledDB
 from MySQLdb.cursors import DictCursor
 import os
 
@@ -15,7 +15,7 @@ class MyDBUtil:
             conv[10] = str  # convert dates to strings
             conv[7] = str  # convert datetime to strings
             self.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=5, host=os.getenv("DB_HOST"),
-                                   user=os.getenv("DB_USER"), password=os.getenv("DB_PASSWORD"), db='rbmq', port=3306,
+                                   user=os.getenv("DB_USER"), password=os.getenv("DB_PASSWORD"), db='rabbit', port=3306,
                                    cursorclass=DictCursor, conv=conv)
             print('MyDBUtil object created')
         except Exception as e:
