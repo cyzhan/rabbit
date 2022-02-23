@@ -46,15 +46,17 @@ def authorized():
             current_ts = int(time.time())
             renewable: bool = current_ts > (token_body.exp - RENEW_MARGIN)
             sign_in_redis: bool = redis.get(RedisKey.login_user(token_body.id)) == signature
+            request.ctx.new_token = None
 
             if sign_in_redis and renewable:
                 new_token_body: dict = token_body.dict()
                 new_token_body["exp"] = current_ts + TOKEN_PERIOD
                 new_token: str = create(new_token_body)
-                print("new toke = {}".format(new_token))
+                # print("new token = {}".format(new_token))
                 redis.set(RedisKey.login_user_temp(token_body.id), signature, ex=10)
                 redis.set(RedisKey.login_user(token_body.id), new_token.split('.')[2], ex=TOKEN_PERIOD)
                 request.ctx.token_body = token_body
+                request.ctx.new_token = new_token
                 return await f(request, *args, **kwargs)
             elif sign_in_redis:
                 request.ctx.token_body = token_body
