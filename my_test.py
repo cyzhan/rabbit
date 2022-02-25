@@ -1,8 +1,11 @@
 import base64
 import hashlib
 import hmac
+import json
 import unittest
 from urllib.parse import quote
+
+from model.order_model import OrderList
 from util import encrypt
 import redis
 
@@ -34,6 +37,16 @@ class MyTestCase(unittest.TestCase):
         r.set('abc', '123')
         v = r.get('abc')
         print('v = {}'.format(v))
+
+    def test_validator(self):
+        json_str = '''
+        [{"productId": 1, "quantity": 5}, {"productId": 2, "quantity": 3}]
+        '''
+        # val = [{'productId': 1, 'quantity': 5}, {'productId': 2, 'quantity': 3}]
+        val = json.loads(json_str)
+        model = OrderList(items=val)
+        print(model.dict())
+        # print(model.items)
 
 
 if __name__ == '__main__':

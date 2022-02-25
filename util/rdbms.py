@@ -46,5 +46,56 @@ class MyDBUtil:
             cursor.close()
             cnx.close()
 
+    def get_cnx(self):
+        return self.__pool.connection()
+
 
 db = MyDBUtil()
+
+
+def transaction(func):
+    async def wrapper(*args, **kwargs):
+        conn = db.get_cnx()
+        try:
+            result = await func(*args, **kwargs, conn=conn)
+            conn.commit()
+            return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+    return wrapper
+
+
+async def query(sql: str, params, conn) -> tuple:
+    cursor = conn.cursor()
+    try:
+        count = cursor.execute(sql, params)
+        print('fetch rows = {}'.format(count))
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+
+
+async def execute(sql: str, params, conn) -> int:
+    cursor = conn.cursor()
+    try:
+        return cursor.execute(sql, params)
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+
+
+async def batch_insert(sql: str, params, conn) -> int:
+    cursor = conn.cursor()
+    try:
+        # return cursor.execute(sql, params)
+        return cursor.executemany(sql, params)
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()

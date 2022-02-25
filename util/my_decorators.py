@@ -34,6 +34,26 @@ def body_validator(clz: type):
     return decorator
 
 
+def body_validator2(clz: type):
+    def decorator(f):
+        @wraps(f)
+        async def decorated_function(request: Request, *args, **kwargs):
+            try:
+                obj = clz(items=request.json)
+                response = await f(request, *args, **kwargs, items=obj.items)
+                return response
+            except ValidationError as e:
+                print(e.json())
+                ary = loads(e.json())
+                msg1 = ary[0]['loc'][0]
+                return json({
+                    "code": 40000,
+                    "msg": "invalided input [{}]".format(msg1)
+                }, status=400)
+        return decorated_function
+    return decorator
+
+
 def authorized():
     def decorator(f):
         @wraps(f)
