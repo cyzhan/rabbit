@@ -56,6 +56,7 @@ db = MyDBUtil()
 def transaction(func):
     async def wrapper(*args, **kwargs):
         conn = db.get_cnx()
+        conn.autocommit = False
         try:
             result = await func(*args, **kwargs, conn=conn)
             conn.commit()
@@ -64,6 +65,7 @@ def transaction(func):
             conn.rollback()
             raise e
         finally:
+            conn.cursor().close()
             conn.close()
     return wrapper
 
@@ -87,6 +89,17 @@ async def execute(sql: str, params, conn) -> int:
         raise e
     finally:
         cursor.close()
+
+
+async def execute2(sql: str, params, cursor) -> int:
+    # cursor = conn.cursor()
+    # try:
+    return cursor.execute(sql, params)
+    # except Exception as e:
+    #     conn.rollback()
+    #     raise e
+    # finally:
+    #     cursor.close()
 
 
 async def batch_insert(sql: str, params, conn) -> int:
