@@ -43,13 +43,10 @@ async def create_order(items: list, token_body: TokenBody, conn):
     if update_row == 0:
         return response_error(9, 'insufficient balance')
     print('update user balance row count = {}'.format(update_row))
-    cursor = conn.cursor()
-    update_row = await rdbms.execute2(sql=order_sql.INSERT_ORDER_MAIN, params=[bill_amount, 1], cursor=cursor)
-    # update_row = await rdbms.execute(sql=order_sql.INSERT_ORDER_MAIN, params=[bill_amount, 1], conn=conn)
-    print('insert order main row = {}'.format(update_row))
-    # last_insert_order_id = await rdbms.execute(sql=common_sql.SELECT_LAST_INSERT_ID, params=[], conn=conn)
-    last_insert_order_id = await rdbms.execute2(sql=common_sql.SELECT_LAST_INSERT_ID, params=[], cursor=cursor)
-    cursor.close()
+    last_insert_order_id = await rdbms.insert_and_get_last_id(sql=order_sql.INSERT_ORDER_MAIN,
+                                                              params=[bill_amount, 1],
+                                                              conn=conn)
+
     print('last_insert_order_id = {}'.format(last_insert_order_id))
 
     data = []

@@ -91,15 +91,18 @@ async def execute(sql: str, params, conn) -> int:
         cursor.close()
 
 
-async def execute2(sql: str, params, cursor) -> int:
-    # cursor = conn.cursor()
-    # try:
-    return cursor.execute(sql, params)
-    # except Exception as e:
-    #     conn.rollback()
-    #     raise e
-    # finally:
-    #     cursor.close()
+async def insert_and_get_last_id(sql: str, params, conn) -> int:
+    cursor = conn.cursor()
+    try:
+        updated_row: int = cursor.execute(sql, params)
+        if updated_row is 0:
+            raise Exception('insert error')
+        return cursor.lastrowid
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
 
 
 async def batch_insert(sql: str, params, conn) -> int:
