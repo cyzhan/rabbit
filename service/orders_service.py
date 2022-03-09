@@ -52,14 +52,9 @@ async def create_order(items: list, token_body: TokenBody, conn):
     data = []
     for item in items:
         data.append((last_insert_order_id, item.productId, item.quantity))
-    sql: str = '''
-    INSERT INTO rabbit.order_detail
-    (order_id, product_id, price, quantity, created_time, updated_time)
-    VALUES(%s, %s, 10, %s, current_timestamp(), current_timestamp())
-    '''
-    insert_rows = await rdbms.batch_insert(sql, data, conn)
-    print('insert_rows = {}'.format(insert_rows))
 
+    insert_rows = await rdbms.batch_insert(order_sql.INSERT_ORDER_DETAIL, data, conn)
+    print('insert_rows = {}'.format(insert_rows))
     return response_ok(data={'billAmount': bill_amount, 'orderNo': last_insert_order_id})
 
 
