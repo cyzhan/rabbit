@@ -16,7 +16,7 @@ class MyDBUtil:
             conv[7] = str  # convert datetime to strings
             self.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=5, host=os.getenv("DB_HOST"),
                                    user=os.getenv("DB_USER"), password=os.getenv("DB_PASSWORD"), db='rabbit', port=3306,
-                                   cursorclass=DictCursor, conv=conv)
+                                   cursorclass=DictCursor, conv=conv, autocommit=True)
             print('MyDBUtil object created')
         except Exception as e:
             print(e)
@@ -66,6 +66,7 @@ def transaction(func):
             raise e
         finally:
             conn.cursor().close()
+            conn.autocommit = True
             conn.close()
     return wrapper
 
