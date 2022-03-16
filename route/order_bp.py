@@ -16,4 +16,4 @@ async def create_order(request: Request, items: list) -> response:
 
 @orders_bp.route("", methods=['GET'])
 async def get_products(request: Request) -> response:
-    return json(await orders_service.select_products([1 , 3, 7]))
+    return json(await orders_service.select_products([1, 3, 7]))

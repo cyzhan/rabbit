@@ -4,7 +4,7 @@ import hmac
 import os
 import time
 from sanic import Request
-from exception.UnAuthorizedException import UnAuthorizedException
+from exception.unauthorized_exception import UnAuthorizedException
 import ujson
 from model.token_body import TokenBody
 from util.redis_util import r as redis

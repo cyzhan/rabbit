@@ -3,7 +3,7 @@ from sanic.response import json
 from sanic import Request
 from pydantic import ValidationError
 from ujson import loads
-from exception.UnAuthorizedException import UnAuthorizedException
+from exception.unauthorized_exception import UnAuthorizedException
 from .jwt_util import verify2, create
 import os
 import time

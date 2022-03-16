@@ -2,7 +2,6 @@ import os
 from sanic import Request
 from model.page_model import Page
 from model.user_model import User
-# from sql.user_script import UserSql
 from sql import user_sql
 from util import encrypt, jwt_util
 from util.common import response_ok, response_error
@@ -18,16 +17,18 @@ class UserService:
         data = user.dict()
         encrypt_pwd = encrypt.md5("{}:{}".format(data['password'], self.__salt1))
         updated_rows = await self.__db.insert(user_sql.REGISTER, [data['name'], encrypt_pwd, data['email']])
-        print("rabbit.user updated row = {}".format(updated_rows))
+        # print("rabbit.user updated row = {}".format(updated_rows))
+        if updated_rows is 0:
+            return response_error(3, 'account or is used')
         return response_ok()
 
     async def login(self, body: User) -> dict:
         data_tuple = await self.__db.query_once(user_sql.GET_USER_INFO_BY_NAME, [body.name])
         if len(data_tuple) == 0:
-            return response_error(2, 'account or password error')
+            return response_error(2, 'invalid login info')
         pwd_in_db = data_tuple[0].pop('password', None)
         if pwd_in_db != encrypt.md5("{}:{}".format(body.password, self.__salt1)):
-            return response_error(2, 'account or password error')
+            return response_error(2, 'invalid login info')
         else:
             body.id = data_tuple[0]["id"]
             body_dict = body.dict()
@@ -42,7 +43,7 @@ class UserService:
     async def get_user_by_id(self, request: Request, user_id: int) -> dict:
         data: tuple = await self.__db.query_once(user_sql.GET_USER_INFO, [user_id])
         if len(data) == 0:
-            return response_error(1, 'request data is not found')
+            return response_error(1, 'resource not found')
         return response_ok(data=data[0], new_token=request.ctx.new_token)
 
 

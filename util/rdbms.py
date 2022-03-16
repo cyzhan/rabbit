@@ -11,12 +11,13 @@ class MyDBUtil:
         try:
             conv = converters.conversions.copy()
             # break below line to check type conv
-            conv[246] = float  # convert decimals to floats
+            # conv[246] = float  # convert decimals to floats
             conv[10] = str  # convert dates to strings
             conv[7] = str  # convert datetime to strings
             self.__pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=5, host=os.getenv("DB_HOST"),
                                    user=os.getenv("DB_USER"), password=os.getenv("DB_PASSWORD"), db='rabbit', port=3306,
-                                   cursorclass=DictCursor, conv=conv, autocommit=True)
+                                   cursorclass=DictCursor, conv=conv)
+            # autocommit=True, 設定為true, conn.rollback 無效
             print('MyDBUtil object created')
         except Exception as e:
             print(e)
@@ -56,7 +57,6 @@ db = MyDBUtil()
 def transaction(func):
     async def wrapper(*args, **kwargs):
         conn = db.get_cnx()
-        conn.autocommit = False
         try:
             result = await func(*args, **kwargs, conn=conn)
             conn.commit()
@@ -66,7 +66,6 @@ def transaction(func):
             raise e
         finally:
             conn.cursor().close()
-            conn.autocommit = True
             conn.close()
     return wrapper
 

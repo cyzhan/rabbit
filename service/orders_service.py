@@ -1,9 +1,12 @@
+from decimal import Decimal
 from typing import Union
+
+from exception.logic_error_exception import LogicErrorException
 from model.token_body import TokenBody
 from util import rdbms
 from util.common import response_ok, response_error
 from util.rdbms import transaction
-from sql import product_sql, user_sql, order_sql, common_sql
+from sql import product_sql, user_sql, order_sql
 
 
 @transaction
@@ -22,39 +25,33 @@ async def create_order(items: list, token_body: TokenBody, conn):
         for product in query_result:
             if item.productId != product['id']:
                 continue
+            if Decimal(item.price) != product['price']:
+                raise LogicErrorException(code=41, msg='price is not match. id: {}'.format(product['id']))
             left_quantity = product['quantity'] - item.quantity
             if left_quantity < 0:
-                return response_error(9, 'product id: {}, quantity is not sufficient, order quantity: {}, '
-                                         'storage quantity: {}'.format(item.productId, item.quantity,
-                                                                       product['quantity']))
+                raise LogicErrorException(4, 'product id: {}, insufficient quantity'.format(item.productId))
 
-            print('product id: {}, total: {}'.format(item.productId, item.quantity*product['price']))
             await rdbms.execute(sql=product_sql.UPDATE_PRODUCT_FOR_QUANTITY,
                                 params=[left_quantity, item.productId],
                                 conn=conn)
             bill_amount = bill_amount + item.quantity*product['price']
             break
 
-    print('bill_amount = {}'.format(bill_amount))
-
     update_row = await rdbms.execute(sql=user_sql.UPDATE_USER_BALANCE_ON_PURCHASE,
                                      params=[bill_amount, token_body.id, bill_amount],
                                      conn=conn)
     if update_row == 0:
-        return response_error(9, 'insufficient balance')
-    print('update user balance row count = {}'.format(update_row))
-    last_insert_order_id = await rdbms.insert_and_get_last_id(sql=order_sql.INSERT_ORDER_MAIN,
-                                                              params=[bill_amount, 1],
-                                                              conn=conn)
+        raise LogicErrorException(5, 'insufficient balance')
 
-    print('last_insert_order_id = {}'.format(last_insert_order_id))
+    last_insert_order_id = await rdbms.insert_and_get_last_id(sql=order_sql.INSERT_ORDER_MAIN,
+                                                              params=[token_body.id, bill_amount, 1],
+                                                              conn=conn)
 
     data = []
     for item in items:
-        data.append((last_insert_order_id, item.productId, item.quantity))
+        data.append((last_insert_order_id, item.productId, item.price, item.quantity))
 
     insert_rows = await rdbms.batch_insert(order_sql.INSERT_ORDER_DETAIL, data, conn)
-    print('insert_rows = {}'.format(insert_rows))
     return response_ok(data={'billAmount': bill_amount, 'orderNo': last_insert_order_id})
 
 

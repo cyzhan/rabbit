@@ -4,7 +4,6 @@ import hmac
 import json
 import unittest
 from urllib.parse import quote
-
 from model.order_model import OrderList
 from util import encrypt
 import redis

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class Order(BaseModel):
     productId: int
+    price: str
     quantity: int
 
 
