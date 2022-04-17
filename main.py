@@ -1,9 +1,11 @@
-import asyncio
 from dotenv import load_dotenv
-from sanic import Sanic, json, app
+from sanic import Sanic, json
 import os
 from exception.logic_error_exception import LogicErrorException
 from exception.unauthorized_exception import UnAuthorizedException
+from util.aiodb_util import db
+
+load_dotenv()
 
 
 def create_app():
@@ -15,16 +17,7 @@ def create_app():
     app.error_handler.add(UnAuthorizedException, unauthorized_access)
     app.error_handler.add(LogicErrorException, catch_logic_error)
     app.error_handler.add(Exception, catch_anything)
-    # app.add_task(notify_server_started_after_five_seconds())
-
-    @app.listener('before_server_start')
-    def init(sanic, loop):
-        if loop is None:
-            print('loop is none')
-        print('before start')
-        # global sem
-        # concurrency_per_worker = 4
-        # sem = asyncio.Semaphore(concurrency_per_worker, loop=loop)
+    app.register_listener(on_start, 'after_server_start')
 
     return app
 
@@ -44,19 +37,10 @@ def catch_logic_error(request, e):
     return json({"code": e.code, "msg": e.msg}, status=500)
 
 
-async def notify_server_started_after_five_seconds():
-    await asyncio.sleep(5)
-    print('Server successfully started!')
-    loop = asyncio.get_running_loop()
-    print('loop get !')
-
-
-# @app.listener('before_server_start')
-# def init(sanic, loop):
-#     print('before start')
+async def on_start(sanic_app, loop):
+    await db.create_pool(loop=loop)
 
 
 if __name__ == '__main__':
-    load_dotenv()
     create_app().run(host='127.0.0.1', port=os.getenv("SERVER_PORT"))
 

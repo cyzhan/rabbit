@@ -6,7 +6,7 @@ import re
 class User(BaseModel):
     id: Optional[int]
     name: str
-    email: str
+    email: Optional[str]
     password: str
 
     @validator('password')
@@ -24,6 +24,6 @@ class User(BaseModel):
             raise ValueError('invalid length')
         if len(set(value)) <= 2:
             raise ValueError('too simple')
-        if p.search(value) != None:
+        if p.search(value) is not None:
             raise ValueError('invalid character')
         return value
