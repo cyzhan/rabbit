@@ -2,6 +2,7 @@ from sanic import Blueprint, json
 from sanic import Request, response
 from model.page_model import Page
 from model.password_model import Password
+from model.register_model import RegisterModel
 from model.user_model import User
 from util.my_decorators import body_validator, authorized
 from util.common import response_ok
@@ -12,8 +13,8 @@ users_bp = Blueprint("users_bp", url_prefix="/users")
 
 @users_bp.route("", methods=['POST'])
 # @validate(json=User)
-@body_validator(clz=User)
-async def register(request: Request, body: User) -> response:
+@body_validator(clz=RegisterModel)
+async def register(request: Request, body: RegisterModel) -> response:
     return json(await user_service.register(user=body))
 
 
@@ -35,7 +36,7 @@ async def get_users_list(request: Request) -> response:
 async def get_user_by_id(request: Request, user_id: int) -> response:
     # token_body = request.ctx.token_body
     # print("id:{},name:{}".format(token_body.id, token_body.name))
-    return json(await user_service.get_user_by_id(user_id=user_id))
+    return json(await user_service.get_user_by_id(request=request, user_id=user_id))
 
 
 @users_bp.route("/<user_id:int>", methods=['PUT'])
