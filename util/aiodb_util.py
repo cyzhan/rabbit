@@ -37,6 +37,17 @@ class AioDBUtil:
         return await cursor.fetchall()
 
     @cursor_inject
+    async def select_in(self, sql: str, params: list, cursor) -> tuple:
+        vacancies = []
+        args_count: int = len(params)
+        for i in range(0, args_count):
+            vacancies.append('%s')
+        select_in_script = sql.format(','.join(vacancies))
+        count: int = await cursor.execute(select_in_script, params)
+        print(f'fetch row count = {count}')
+        return await cursor.fetchall()
+
+    @cursor_inject
     async def insert_or_update(self, sql: str, cursor, params=None) -> int:
         if params is None:
             params = []
@@ -55,7 +66,7 @@ class AioDBUtil:
     async def batch_insert(self, sql: str, cursor, params=None) -> int:
         return await cursor.executemany(sql, params)
 
-    async def create_pool(self, loop) -> None:
+    async def create_pool(self, loop) -> bool:
         if self.__pool is None:
             conv = converters.conversions.copy()
             conv[10] = str  # convert dates to strings
@@ -63,9 +74,8 @@ class AioDBUtil:
             self.__pool = await aiomysql.create_pool(minsize=1, maxsize=5, host=os.getenv("DB_HOST"), port=3306,
                                                      user=os.getenv("DB_USER"), password=os.getenv("DB_PASSWORD"),
                                                      db='lottery', loop=loop, conv=conv, autocommit=False)
-            print('mysql connection pool created')
-        else:
-            print('connection pool already exist')
+            return True
+        return False
 
 
 db = AioDBUtil()

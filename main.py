@@ -1,6 +1,9 @@
 from dotenv import load_dotenv
 from sanic import Sanic, json
 import os
+
+from sanic.log import logger
+
 from exception.logic_error_exception import LogicErrorException
 from exception.unauthorized_exception import UnAuthorizedException
 from util.aiodb_util import db
@@ -38,7 +41,11 @@ def catch_logic_error(request, e):
 
 
 async def on_start(sanic_app, loop):
-    await db.create_pool(loop=loop)
+    is_pool_created: bool = await db.create_pool(loop=loop)
+    if is_pool_created:
+        logger.info('mysql connection pool created')
+    else:
+        logger.info('a mysql connection pool is already exist')
 
 
 if __name__ == '__main__':
