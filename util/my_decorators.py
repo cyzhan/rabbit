@@ -34,7 +34,7 @@ def body_validator(clz: type):
     return decorator
 
 
-def body_validator2(clz: type):
+def list_body_validator(clz: type):
     def decorator(f):
         @wraps(f)
         async def decorated_function(request: Request, *args, **kwargs):

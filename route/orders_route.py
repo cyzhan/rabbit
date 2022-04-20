@@ -1,13 +1,13 @@
 from sanic import Blueprint, json, Request, response
 from model.order_model import OrderList
-from service.order import order_service
-from util.my_decorators import body_validator2, authorized
+from service.order_sv import order_service
+from util.my_decorators import list_body_validator, authorized
 
 orders_bp = Blueprint("orders_bp", url_prefix="/orders")
 
 
 @orders_bp.route("", methods=['POST'])
-@body_validator2(clz=OrderList)
+@list_body_validator(clz=OrderList)
 @authorized()
 async def create_order(request: Request, items: list) -> response:
     print('items = {}'.format(items))

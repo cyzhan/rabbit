@@ -6,7 +6,7 @@ from model.register_model import RegisterModel
 from model.user_model import User
 from util.my_decorators import body_validator, authorized
 from util.common import response_ok
-from service.users_service import user_service
+from service.user_sv import user_service
 
 users_bp = Blueprint("users_bp", url_prefix="/users")
 
