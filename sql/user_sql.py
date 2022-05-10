@@ -26,19 +26,3 @@ SET a.balance = a.balance - %s
 WHERE a.id = %s AND ((a.balance - %s)>=0)
 '''
 
-
-def get_users_info(user_ids: list, order_by: str):
-    template: str = '''
-    SELECT a.id, a.name, a.email, a.balance, a.created_time AS createdTime, a.updated_time AS updatedTime 
-    FROM rabbit.user AS a
-    {} 
-    LIMIT %s,%s
-    '''
-    if user_ids is None:
-        return template.format('')
-    if len(user_ids) <= 0:
-        return template.format('')
-    where_sql = 'WHERE a.id in ({})'.format(','.join(user_ids))
-    string = template.format(where_sql)
-    print(string)
-    return string

@@ -9,11 +9,11 @@ import unittest
 from urllib.parse import quote
 import requests
 from dotenv import load_dotenv
-
 import exception
 from model.order_model import OrderList
 from util import encrypt
 import redis
+from util.aiodb_util import db
 
 cache = {'login_user': {
     "id": 0,
@@ -22,6 +22,8 @@ cache = {'login_user': {
     "token": ""
 }}
 
+BASE_URL = 'http://localhost:8005/rabbit'
+
 
 def log(msg: str):
     print('{} | {}'.format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), msg))
@@ -29,6 +31,14 @@ def log(msg: str):
 
 def print_pretty_json(json_str: str):
     print(json.dumps(json.loads(json_str), indent=2, sort_keys=False))
+
+
+def get_auth_headers():
+    return {'Authorization': cache['login_user']['token']}
+
+
+async def init_aiodb(evloop):
+    await db.create_pool(evloop)
 
 
 class MyTestCase(unittest.TestCase):
@@ -108,9 +118,8 @@ class MyTestCase(unittest.TestCase):
 
     def test_get_users_list(self):
         params = {'pageIndex': 1, 'pageSize': 10}
-        params['user_id'] = [1, 3, 5]
-        headers = {'Authorization': cache['login_user']['token']}
-        r = requests.get(url='http://localhost:8005/rabbit/users', params=params, headers=headers)
+        # params['user_id'] = [1, 3, 5]
+        r = requests.get(url=BASE_URL + '/users', params=params, headers=get_auth_headers)
         print_pretty_json(r.text)
         json_content = r.json()
         self.assertEqual(0, json_content['code'])
@@ -123,8 +132,34 @@ class MyTestCase(unittest.TestCase):
         json_content = r.json()
         self.assertEqual(401, json_content['code'])
 
-    def test_get_product_list(self):
-        params = {'pageIndex': 1, 'pageSize': 10}
+    def test_get_products(self):
+        params = {'pageIndex': 1, 'pageSize': 50}
+        # params['id'] = [2, 7]
+        r = requests.get(url=BASE_URL + '/products', params=params, headers=get_auth_headers())
+        print_pretty_json(r.text)
+        json_content = r.json()
+        self.assertEqual(0, json_content['code'])
+
+    def test_purchase_product(self):
+        from service.product_sv import product_service
+        from model.page_model import Page
+        from random import randrange
+        import asyncio
+
+        loop = asyncio.get_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(init_aiodb(evloop=loop))
+        query_data = loop.run_until_complete(product_service.get_products(page=Page(index=1, size=50), ids=[]))['data']
+        product_count = len(query_data)
+        random_numbers = set()
+        for i in range(5):
+            if len(random_numbers) > 2:
+                break
+            random_numbers.add(randrange(product_count))
+        print(random_numbers)
+        print(query_data)
+        product = query_data[random_numbers.pop()]
+        print(product)
 
 
 if __name__ == '__main__':

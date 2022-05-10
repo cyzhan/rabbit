@@ -39,8 +39,22 @@ class UserService:
             return response_ok(data_tuple[0])
 
     async def get_users_list(self, request: Request, page: Page, user_ids: list) -> dict:
-        sql: str = user_sql.get_users_info(user_ids=user_ids, order_by='')
-        data: tuple = await self.__db.query_once(sql=sql, params=[page.offset(), page.size])
+        sql_component = ['''
+        SELECT a.id, a.name, a.email, a.balance, a.created_time AS createdTime, a.updated_time AS updatedTime 
+        FROM rabbit.user AS a''']
+        args = []
+        if user_ids is not None and len(user_ids) > 0:
+            ary = []
+            for item in user_ids:
+                ary.append('%s')
+                args.append(item)
+            where_clause = 'WHERE a.id in ({})'.format(','.join(ary))
+            sql_component.append(where_clause)
+        sql_component.append('LIMIT %s,%s')
+        sql = " ".join(sql_component)
+        args.append(page.offset())
+        args.append(page.size)
+        data: tuple = await self.__db.query_once(sql=sql, params=args)
         return response_ok(data=data, new_token=request.ctx.new_token)
 
     async def get_user_by_id(self, request: Request, user_id: int) -> dict:

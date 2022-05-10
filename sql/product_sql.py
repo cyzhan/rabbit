@@ -15,4 +15,3 @@ UPDATE rabbit.product AS a
 SET a.quantity = %s WHERE a.id = %s
 '''
 
-
