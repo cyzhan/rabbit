@@ -32,7 +32,7 @@ def catch_anything(request, exception):
 
 def unauthorized_access(request, e):
     print(e.to_dict())
-    return json({"code": 1, "msg": "unauthorized"}, status=401)
+    return json({"code": 401, "msg": "unauthorized"}, status=401)
 
 
 def catch_logic_error(request, e):

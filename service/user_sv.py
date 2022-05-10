@@ -38,8 +38,9 @@ class UserService:
             data_tuple[0]['token'] = jwt_util.create_and_store_redis(body_dict)
             return response_ok(data_tuple[0])
 
-    async def get_users_list(self, request: Request, page: Page) -> dict:
-        data: tuple = await self.__db.query_once(sql=user_sql.GET_USERS_INFO, params=[page.offset(), page.size])
+    async def get_users_list(self, request: Request, page: Page, user_ids: list) -> dict:
+        sql: str = user_sql.get_users_info(user_ids=user_ids, order_by='')
+        data: tuple = await self.__db.query_once(sql=sql, params=[page.offset(), page.size])
         return response_ok(data=data, new_token=request.ctx.new_token)
 
     async def get_user_by_id(self, request: Request, user_id: int) -> dict:

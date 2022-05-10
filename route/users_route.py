@@ -28,7 +28,8 @@ async def login(request: Request, body: User) -> response:
 @authorized()
 async def get_users_list(request: Request) -> response:
     page = Page(index=request.args.get("pageIndex"), size=request.args.get("pageSize"))
-    return json(await user_service.get_users_list(request, page=page))
+    user_ids: list = request.args.getlist('user_id')
+    return json(await user_service.get_users_list(request=request, page=page, user_ids=user_ids))
 
 
 @users_bp.route("/<user_id:int>", methods=['GET'])
