@@ -1,4 +1,5 @@
 import base64
+import decimal
 import hashlib
 import hmac
 import json
@@ -149,17 +150,30 @@ class MyTestCase(unittest.TestCase):
         loop = asyncio.get_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(init_aiodb(evloop=loop))
-        query_data = loop.run_until_complete(product_service.get_products(page=Page(index=1, size=50), ids=[]))['data']
-        product_count = len(query_data)
+        products: list = loop.run_until_complete(product_service.get_products(page=Page(index=1, size=50), ids=[]))['data']
+        product_count = len(products)
         random_numbers = set()
         for i in range(5):
             if len(random_numbers) > 2:
                 break
             random_numbers.add(randrange(product_count))
-        print(random_numbers)
-        print(query_data)
-        product = query_data[random_numbers.pop()]
-        print(product)
+
+        purchase_items = []
+        total_price = decimal.Decimal('0')
+        for index in random_numbers:
+            product = products[index]
+            product['quantity'] = randrange(1, 9)
+            total_price += product['price'] * decimal.Decimal(product['quantity'])
+            product['price'] = str(product['price'])
+            log(f'id={product["id"]}, quantity={product["quantity"]}, price={product["price"]}')
+            product['productId'] = product['id']
+            product.pop('id', None)
+            purchase_items.append(product)
+        log(f'total price = {total_price}')
+        r = requests.post(url=BASE_URL + '/orders', data=json.dumps(purchase_items), headers=get_auth_headers())
+        print_pretty_json(r.text)
+        json_content = r.json()
+        self.assertEqual(0, json_content['code'])
 
 
 if __name__ == '__main__':
