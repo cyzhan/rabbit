@@ -38,18 +38,26 @@ class UserService:
             data_tuple[0]['token'] = jwt_util.create_and_store_redis(body_dict)
             return response_ok(data_tuple[0])
 
-    async def get_users_list(self, request: Request, page: Page, user_ids: list) -> dict:
+    async def get_users_list(self, request: Request, page: Page, user_ids: list,
+                             account: str, date_from: str, date_to: str) -> dict:
         sql_component = ['''
         SELECT a.id, a.name, a.email, a.balance, a.created_time AS createdTime, a.updated_time AS updatedTime 
-        FROM rabbit.user AS a''']
+        FROM rabbit.user AS a
+        WHERE 1 = 1''']
         args = []
         if user_ids is not None and len(user_ids) > 0:
             ary = []
             for item in user_ids:
                 ary.append('%s')
                 args.append(item)
-            where_clause = 'WHERE a.id in ({})'.format(','.join(ary))
-            sql_component.append(where_clause)
+            sql_component.append('AND a.id in ({})'.format(','.join(ary)))
+        if account is not None and account is not '':
+            sql_component.append('AND a.name = %s')
+            args.append(account)
+        if (date_from is not None and date_from is not '') and (date_to is not None and date_to is not ''):
+            sql_component.append('AND a.created_time BETWEEN %s and %s')
+            args.append('{} 00:00:00'.format(date_from))
+            args.append('{} 23:59:59'.format(date_to))
         sql_component.append('LIMIT %s,%s')
         sql = " ".join(sql_component)
         args.append(page.offset())

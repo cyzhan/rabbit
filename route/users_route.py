@@ -29,7 +29,11 @@ async def login(request: Request, body: User) -> response:
 async def get_users_list(request: Request) -> response:
     page = Page(index=request.args.get("pageIndex"), size=request.args.get("pageSize"))
     user_ids: list = request.args.getlist('user_id')
-    return json(await user_service.get_users_list(request=request, page=page, user_ids=user_ids))
+    account: str = request.args.get('account')
+    date_from: str = request.args.get('dateFrom')
+    date_to: str = request.args.get('dateTo')
+    return json(await user_service.get_users_list(request=request, page=page, user_ids=user_ids, account=account,
+                                                  date_from=date_from, date_to=date_to))
 
 
 @users_bp.route("/<user_id:int>", methods=['GET'])
